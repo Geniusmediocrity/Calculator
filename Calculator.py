@@ -5,41 +5,73 @@ from tkinter import messagebox # Нужен в основном для сооб�
 
 
 #! Функции:
+# Математичесские операции
 def insert_sqrt():
     """ Вычисляет квадартный корень выражения """
-    total = math.sqrt(int(calc.get()))
-    calc.delete(0, tk.END)
-    calc.insert(0,f'{total}')
+    try:
+        total = math.sqrt(int(calc.get()))
+        calc['state'] = tk.NORMAL
+        calc.delete(0, tk.END)
+        calc.insert(0,f'{total}')
+        calc['state'] = tk.DISABLED
+    except ValueError:
+        messagebox.showerror('ValueError', 'При данном значении операция не возможна')
+        calc['state'] = tk.NORMAL
+        calc.delete(0, tk.END)
+        calc.insert(0, '0')
+        calc['state'] = tk.DISABLED
 
 def insert_square():
     """ Возводит выражение в квадрат """
-    value = float(calc.get())
-    total = str(value ** value)
+    value = calc.get()
+    if '**' not in value and value[-1] not in '+-*/':
+        value = calc.get() + '**'
+    else:
+        value = value.replace('**', '')
+    calc['state'] = tk.NORMAL
     calc.delete(0, tk.END)
-    calc.insert(0,f'{total}')
+    calc.insert(0, value)
+    calc['state'] = tk.DISABLED
 
 def insert_persentage():
     """ Высчитывает процент выражения от единицы(1/{выражение}) """
-    total = 1 / int(calc.get())
-    calc.delete(0, tk.END)
-    calc.insert(0,f'{total}')
-
-def delete_last():
-    """ Удаляет последний элемент в выражении в виджете Entry """
-    value = calc.get()
-    value = value[:-1]
-    if len(value) == 0:
-        value = 0
-    calc.delete(0, tk.END)
-    calc.insert(0, value)
-
-def delete_all():
-    """ Удалаяет все выражение в виджете Entry """
-    calc.delete(0, tk.END)
-    calc.insert(0, '0')
-
+    try:
+        total = 1 / int(calc.get())
+        calc['state'] = tk.NORMAL
+        calc.delete(0, tk.END)
+        calc.insert(0,f'{total}')
+        calc['state'] = tk.DISABLED
+    except ValueError:
+        messagebox.showerror('ValueError', 'При данном значении операция не возможна')
+        calc['state'] = tk.NORMAL
+        calc.delete(0, tk.END)
+        calc.insert(0, '0')
+        calc['state'] = tk.DISABLED
+    except ZeroDivisionError:
+        messagebox.showerror('ZeroDivisionError', 'Деление на ноль запрещенно')
+        calc['state'] = tk.NORMAL
+        calc.delete(0, tk.END)
+        calc.insert(0, '0')
+        calc['state'] = tk.DISABLED
+        
+def percentage_number():
+    """ Переводит выражение в процент """
+    try:
+        take = int(calc.get())
+        total = take * 0.01
+        calc['state'] = tk.NORMAL
+        calc.delete(0, tk.END)
+        calc.insert(0, total)
+        calc['state'] = tk.DISABLED
+    except ValueError:
+        messagebox.showerror('ValueError', 'При данном значении операция не возможна')
+        calc['state'] = tk.NORMAL
+        calc.delete(0, tk.END)
+        calc.insert(0, '0')
+        calc['state'] = tk.DISABLED
+        
 def un_minus():
-    """ Функция задает унарный минус перед значением """    # !WARNING!!!!!!!!!!!!!!!!!БАГИ!!!!!!!!!!!!!!!!!!!!БАГИ!!!!!!!!!!!!!!!!!!!!!БАГИ!!!!!!!!!!!!!!!!!!!!БАГИ!!!!!!!!!!!!!!!!!!!!!!!!!!БАГИ!!!!!!!!!!!!!!!!!!!!!!!!!!
+    """ Функция задает унарный минус перед значением """    # TODO:!WARNING!!!!!!!!!!!!!!!!!БАГИ!!!!!!!!!!!!!!!!!!!!БАГИ!!!!!!!!!!!!!!!!!!!!!БАГИ!!!!!!!!!!!!!!!!!!!!БАГИ!!!!!!
     value = calc.get() # полученной значение = value
     operations = '-+/*'
     for el in operations: # перебор
@@ -80,16 +112,30 @@ def un_minus():
 
     calc.delete(0, tk.END)
     calc.insert(0, value)
-
-def percentage_number():
-    """ Переводит выражение в процент """
-    take = int(calc.get())
-    total = take * 0.01
+    
+# Операции удаления значения
+def delete_last():
+    """ Удаляет последний элемент в выражении в виджете Entry """
+    value = calc.get()
+    value = value[:-1]
+    if len(value) == 0:
+        value = 0
+    calc['state'] = tk.NORMAL
     calc.delete(0, tk.END)
-    calc.insert(0, total)
+    calc.insert(0, value)
+    calc['state'] = tk.DISABLED
 
+def delete_all():
+    """ Удалаяет все выражение в виджете Entry """
+    calc['state'] = tk.NORMAL
+    calc.delete(0, tk.END)
+    calc.insert(0, '0')
+    calc['state'] = tk.DISABLED
+
+# Вычисление значения
 def calculate():
     """ Считает значение которое находится в виджете Entry(которое задал пользователь) """
+    calc['state'] = tk.NORMAL
     value = calc.get()
     if value[-1] in '+-*/':
         value = value + value[:-1]
@@ -99,10 +145,12 @@ def calculate():
     except ZeroDivisionError:
         messagebox.showerror('ZeroDivisionError', 'Деление на ноль запрещенно')
         calc.insert(0, '0')
-    except NameError:
-        messagebox.showerror('EntryError', 'Нужно вводить только цифры.\nБыли введены неверные значения')
-        calc.insert(0, '0')
+    except ValueError:
+        messagebox.showerror('ValueError', 'При данном значении операция не возможна')
+        calc.insert(0, '0') 
+    calc['state'] = tk.DISABLED
 
+# Создание кнопок
 def make_digit_button(digit):
     """ Создает кнопки цифр
 
@@ -123,6 +171,7 @@ def make_operation_button(operation):
     """
     return tk.Button(win, text=operation, bg='#f27e30', fg='white', bd=1, font=('Arial', 13), command=lambda: add_operation_button(operation))
 
+# Печать значения кнопок
 def add_operation_button(operation):
     """ Печатает значения математических операций
 
@@ -135,8 +184,10 @@ def add_operation_button(operation):
     elif '+' in value or '-' in value or '/' in value or '*' in value:
         calculate()
         value = calc.get()
+    calc['state'] = tk.NORMAL
     calc.delete(0, tk.END)
     calc.insert(0, value+operation)
+    calc['state'] = tk.DISABLED
 
 def add_digit(digit):
     """ Печатает цифру которая находилась в кнопке
@@ -147,8 +198,10 @@ def add_digit(digit):
     value = calc.get()
     if value[0] == '0' and len(value) == 1:
         value = value[1:]
+    calc['state'] = tk.NORMAL
     calc.delete(0, tk.END)
     calc.insert(0, value+digit)
+    calc['state'] = tk.DISABLED
 
 def press_key(event):
     """ Эта функция берет значения с клавиатуры и добавляет его в поле ввода Entry
@@ -157,14 +210,16 @@ def press_key(event):
         event (_str_): значение получаемое с клавиатуры
     """
     char = event.char
+    calc['state'] = tk.NORMAL
     if char.isdigit():
         add_digit(char)
     elif char in '-+/*':
         add_operation_button(char)
-    elif char == '\r' or char is '=': # это клавиша Enter(данное значение получено при помощи функции repr() )
+    elif char == '\r' or char == '=': # это клавиша Enter(данное значение получено при помощи функции repr() )
         calculate()
     elif char == '\x08': # это клавиша Backspace(данное значение получено при помощи функции repr() )
         delete_last()
+    calc['state'] = tk.DISABLED
 
 
 
@@ -185,6 +240,7 @@ win.bind('<Key>', press_key)
 """ Виджет Ввода(Entry) """
 calc = tk.Entry(win, justify=tk.RIGHT, font=('Arial', 20, 'bold'))
 calc.insert(0, '0')
+calc['state'] = tk.DISABLED
 calc.grid(row=0, column=0, columnspan=4,  stick='wens')
 
 
@@ -195,7 +251,7 @@ tk.Button(win, text='+/-', bg='#ffe600', fg='black', bd=1, font=('Arial', 13), c
 tk.Button(win, text='C', bg='#ffe600', fg='black', bd=1, font=('Arial', 13), command=delete_all).grid(row=1, column=2, stick='wens')
 tk.Button(win, text='⌫', bg='#ffe600', fg='black', bd=1, font=('Arial', 13), command=delete_last).grid(row=1, column=3, stick='wens')
 tk.Button(win, text='1/x', bg='#ffe600', fg='black', bd=1, font=('Arial', 13), command=insert_persentage).grid(row=2, column=0, stick='wens')
-tk.Button(win, text='x²', bg='#ffe600', fg='black', bd=1, font=('Arial', 13), command=insert_square).grid(row=2, column=1, stick='wens')
+tk.Button(win, text='xⁿ', bg='#ffe600', fg='black', bd=1, font=('Arial', 13), command=insert_square).grid(row=2, column=1, stick='wens')
 tk.Button(win, text='√', bg='#ffe600', fg='black', bd=1, font=('Arial', 13), command=insert_sqrt).grid(row=2, column=2, stick='wens')
 
 """ Виджеты кнопки(Button) цифры + их функциональное использование """
@@ -208,13 +264,14 @@ make_digit_button('6').grid(row=4, column=2, stick='wens')
 make_digit_button('7').grid(row=5, column=0, stick='wens')
 make_digit_button('8').grid(row=5, column=1, stick='wens')
 make_digit_button('9').grid(row=5, column=2, stick='wens')
-make_digit_button('0').grid(row=6, column=0, columnspan=3, stick='wens')
+make_digit_button('0').grid(row=6, column=0, columnspan=2, stick='wens')
 
 """ Виджеты кнопки(Button) цифры + их функциональное использование """
 make_operation_button('/').grid(row=2, column=3, stick='wens')
 make_operation_button('*').grid(row=3, column=3, stick='wens')
 make_operation_button('-').grid(row=4, column=3, stick='wens')
 make_operation_button('+').grid(row=5, column=3, stick='wens')
+make_digit_button('.').grid(row=6, column=2, stick='wens')
 
 """ Виджеты кнопки(Button) которая высчитывает выражение для получение ответа """
 tk.Button(win, text='=', bg='#f27e30', fg='white', bd=1, font=('Arial', 13), command=calculate).grid(row=6, column=3, stick='wens')
